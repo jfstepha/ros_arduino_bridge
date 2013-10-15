@@ -25,7 +25,7 @@ import thread
 from math import pi as PI, degrees, radians
 import os
 import time
-import sys
+import sys, traceback
 from serial.serialutil import SerialException
 from serial import Serial
 
@@ -75,6 +75,10 @@ class Arduino:
             print "Arduino is ready."
 
         except SerialException:
+            print "Serial Exception:"
+            print sys.exc_info()
+            print "Traceback follows:"
+            traceback.print_exc(file=sys.stdout)
             print "Cannot connect to Arduino!"
             print "Make sure you are plugged in and turned on."
             os._exit(1)
@@ -259,6 +263,10 @@ class Arduino:
         ''' Get the current baud rate on the serial port.
         '''
         return int(self.execute('b'));
+    def get_tick(self):
+        ''' Get the current alive ticks on the serial port
+        '''
+        return int(self.execute('i'))
 
     def get_encoder_counts(self):
         values = self.execute_array('e')

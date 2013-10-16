@@ -27,6 +27,7 @@ from ros_arduino_msgs.srv import *
 from ros_arduino_python.base_controller import BaseController
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int32
+from std_msgs.msg import Float32
 import os, time
 import thread
 
@@ -68,6 +69,10 @@ class ArduinoROS():
         
         # The tick publisher to publish ticks so we know the arduino is alive
         self.tickPub = rospy.Publisher('~ticks', Int32)
+        
+        # Publish the motor drive speeds
+        self.lmotorPub = rospy.Publisher('lmotor_cmd', Float32)
+        self.rmotorPub = rospy.Publisher('rmotor_cmd', Float32)
         
         # A service to position a PWM servo
         rospy.Service('~servo_write', ServoWrite, self.ServoWriteHandler)
@@ -158,6 +163,10 @@ class ArduinoROS():
                     pass
                 
                 self.tickPub.publish( self.controller.get_tick() )
+                (lmotor,rmotor) = self.controller.get_motor()
+                self.lmotorPub.publish( lmotor )
+                self.rmotorPub.publish( rmotor )
+                
                 
                 self.t_next_sensors = now + self.t_delta_sensors
             

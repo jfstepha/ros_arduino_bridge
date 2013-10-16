@@ -267,6 +267,11 @@ class Arduino:
         ''' Get the current alive ticks on the serial port
         '''
         return int(self.execute('i'))
+    
+    def get_motor(self):
+        ''' Get the current motor values
+        '''
+        return ( self.execute_array('f') )
 
     def get_encoder_counts(self):
         values = self.execute_array('e')

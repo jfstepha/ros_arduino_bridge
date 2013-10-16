@@ -28,6 +28,7 @@ from math import sin, cos, pi
 from geometry_msgs.msg import Quaternion, Twist, Pose
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Int16
+from std_msgs.msg import Float32
 from tf.broadcaster import TransformBroadcaster
  
 """ Class to receive Twist commands and publish Odometry data """
@@ -90,6 +91,10 @@ class BaseController:
         self.odomPub = rospy.Publisher('odom', Odometry)
         self.lwheel = rospy.Publisher('lwheel', Int16)
         self.rwheel = rospy.Publisher('rwheel', Int16)
+        self.lwheel_vtarget = rospy.Publisher('lwheel_vtarget', Float32)
+        self.rwheel_vtarget = rospy.Publisher('rwheel_vtarget', Float32)
+        self.lwheel_vel = rospy.Publisher('lwheel_vel', Float32)
+        self.rwheel_vel = rospy.Publisher('rwheel_vel', Float32)
         self.odomBroadcaster = TransformBroadcaster()
         
         rospy.loginfo("Started base controller for a base of " + str(self.wheel_track) + "m wide with " + str(self.encoder_resolution) + " ticks per rev")
@@ -215,6 +220,11 @@ class BaseController:
             # Set motor speeds in encoder ticks per PID loop
             if not self.stopped:
                 self.arduino.drive(self.v_left, self.v_right)
+                
+            self.lwheel_vel.publish( dleft / dt )
+            self.rwheel_vel.publish( dright / dt )
+            self.lwheel_vtarget.publish( self.v_left / dt / self.ticks_per_meter )
+            self.rwheel_vtarget.publish( self.v_right / dt / self.ticks_per_meter )
                 
             self.t_next = now + self.t_delta
             

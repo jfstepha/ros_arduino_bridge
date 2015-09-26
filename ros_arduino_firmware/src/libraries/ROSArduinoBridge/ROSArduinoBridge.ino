@@ -51,13 +51,17 @@
 /* Define the motor controller and encoder library you are using */
 #ifdef USE_BASE
    /* The Pololu VNH5019 dual motor driver shield */
-   #define POLOLU_VNH5019
+   //#define POLOLU_VNH5019
 
    /* The Pololu MC33926 dual motor driver shield */
    //#define POLOLU_MC33926
-
+   
+   #define SeedStudio
    /* The RoboGaia encoder shield */
-   #define ROBOGAIA
+   //#define ROBOGAIA
+   
+   /* Encoders directly attached to Arduino board */
+   #define ARDUINO_ENC_COUNTER
 #endif
 
 //#define USE_SERVOS  // Enable use of PWM servos as defined in servos.h
@@ -67,7 +71,7 @@
 #define BAUDRATE     57600
 
 /* Maximum PWM signal */
-#define MAX_PWM        255
+#define MAX_PWM        256
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
@@ -108,7 +112,7 @@
 
   /* Stop the robot if it hasn't received a movement command
    in this number of milliseconds */
-  #define AUTO_STOP_INTERVAL 2000
+  #define AUTO_STOP_INTERVAL 10000
   long lastMotorCommand = AUTO_STOP_INTERVAL;
 #endif
 
@@ -197,6 +201,7 @@ int runCommand() {
     break;
    case RESET_ENCODERS:
     resetEncoders();
+    resetPID();
     Serial.println("OK");
     break;
   case MOTOR_SPEEDS:
@@ -205,6 +210,7 @@ int runCommand() {
     if (arg1 == 0 && arg2 == 0) {
       setMotorSpeeds(0, 0);
       moving = 0;
+      resetPID();
     }
     else moving = 1;
     leftPID.TargetTicksPerFrame = arg1;
@@ -222,6 +228,13 @@ int runCommand() {
     Ko = pid_args[3];
     Serial.println("OK");
     break;
+case MOTOR_PWM:
+    moving = 0;
+    setMotorSpeeds(arg1, arg2);
+    resetPID();
+    Serial.println("OK"); 
+    break;
+
 #endif
   default:
     Serial.println("Invalid Command");
@@ -235,7 +248,29 @@ void setup() {
 
 // Initialize the motor controller if used */
 #ifdef USE_BASE
+  #ifdef ARDUINO_ENC_COUNTER
+    //set as inputs
+    DDRD &= ~(1<<LEFT_ENC_PIN_A);
+    DDRD &= ~(1<<LEFT_ENC_PIN_B);
+    DDRC &= ~(1<<RIGHT_ENC_PIN_A);
+    DDRC &= ~(1<<RIGHT_ENC_PIN_B);
+    
+    //enable pull up resistors
+    PORTD |= (1<<LEFT_ENC_PIN_A);
+    PORTD |= (1<<LEFT_ENC_PIN_B);
+    PORTC |= (1<<RIGHT_ENC_PIN_A);
+    PORTC |= (1<<RIGHT_ENC_PIN_B);
+    
+    // tell pin change mask to listen to left encoder pins
+    PCMSK2 |= (1 << LEFT_ENC_PIN_A)|(1 << LEFT_ENC_PIN_B);
+    // tell pin change mask to listen to right encoder pins
+    PCMSK1 |= (1 << RIGHT_ENC_PIN_A)|(1 << RIGHT_ENC_PIN_B);
+    
+    // enable PCINT1 and PCINT2 interrupt in the general interrupt mask
+    PCICR |= (1 << PCIE1) | (1 << PCIE2);
+  #endif
   initMotorController();
+  resetPID();
 #endif
 
 /* Attach servos if used */

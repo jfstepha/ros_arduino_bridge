@@ -8,8 +8,29 @@
    *************************************************************/
 
 #ifdef USE_BASE
-   
-#if defined POLOLU_VNH5019
+#if defined SeedStudio
+  #include "SeedStudio.h"
+  
+  void initMotorController() {
+      setup_seedstudio();
+  }
+  
+  void setMotorSpeed(int i, int spd) {
+    if (i == LEFT) {
+      setLMotorSpeed(spd);
+    } else {
+      setRMotorSpeed(spd);
+    }
+  }
+  
+  // A convenience function for setting both motor speeds
+  void setMotorSpeeds(int leftSpeed, int rightSpeed) {
+    setMotorSpeed(LEFT, leftSpeed);
+    setMotorSpeed(RIGHT, rightSpeed);
+  
+  }
+
+#elif defined POLOLU_VNH5019
   /* Include the Pololu library */
   #include "DualVNH5019MotorShield.h"
 

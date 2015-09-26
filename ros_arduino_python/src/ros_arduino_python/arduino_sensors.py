@@ -39,7 +39,7 @@ class MessageType:
     BOOL = 5
     
 class Sensor(object):
-    def __init__(self, controller, name, pin, rate, frame_id="/base_link", direction="input", **kwargs):
+    def __init__(self, controller, name, pin, rate, frame_id, direction="input", **kwargs):
         self.controller = controller
         self.name = name
         self.pin = pin
@@ -89,6 +89,13 @@ class AnalogSensor(Sensor):
         
         self.pub = rospy.Publisher("~sensor/" + self.name, Analog)
         
+        if self.direction == "output":
+            self.controller.pin_mode(self.pin, OUTPUT)
+        else:
+            self.controller.pin_mode(self.pin, INPUT)
+
+        self.value = LOW
+        
     def read_value(self):
         return self.controller.analog_read(self.pin)
     
@@ -105,6 +112,19 @@ class AnalogFloatSensor(Sensor):
         self.msg.header.frame_id = self.frame_id
         
         self.pub = rospy.Publisher("~sensor/" + self.name, AnalogFloat)
+        
+        if self.direction == "output":
+            self.controller.pin_mode(self.pin, OUTPUT)
+        else:
+            self.controller.pin_mode(self.pin, INPUT)
+
+        self.value = LOW
+        
+    def read_value(self):
+        return self.controller.analog_read(self.pin)
+    
+    def write_value(self, value):
+        return self.controller.analog_write(self.pin, value)
     
         
 class DigitalSensor(Sensor):
